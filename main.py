@@ -69,7 +69,7 @@ def show_question(context: ContextTypes.DEFAULT_TYPE):
             if answer[i] == ' ':
                 text += '    '
             else:
-                text += answer[i] if i % 2 == 0 or answer[i] in symbols else '__ '
+                text += answer[i] if i % 2 == 0 or answer[i] in symbols or i == 0 or i == len(answer) - 1 else '__ '
 
     # show all letters
     elif clue_level == 4:
@@ -168,6 +168,7 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['clue_level'] = 0
     if set_or_reset_question_in_context('http://jservice.io/api/random', context) is not None:
         text = "Question: " + context.user_data['current_question']['question']
+        add_statistics(context, score=-10)
     else:
         text = 'Some error occurred when tried to get data from api'
 
@@ -184,10 +185,13 @@ async def remind(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def show_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if 'current_question' in context.user_data.keys():
-        text = context.user_data['current_question']['answer']
+    if update.message.from_user.username == 'imMonkaS':
+        if 'current_question' in context.user_data.keys():
+            text = context.user_data['current_question']['answer']
+        else:
+            text = 'You should ask for a /question first. /help for more info.'
     else:
-        text = 'You should ask for a /question first. /help for more info.'
+        text = 'You have to be creator, to use this function'
 
     await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
@@ -199,11 +203,12 @@ async def show_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def bot_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = '/start - to start this bot\n'
-    help_text += '/question - get a question and then try to answer. Every time you use this command the question changes (if you have already asked for one)\n'
+    help_text += '/question - get a question and then try to answer. Every time you use this command the question changes (if you have already asked for one) and your score drops by 10\n'
     help_text += '/remind - remind current question\n'
     help_text += '/clue - first clue: how many letter; second clue: first and last letter; third clue: all even letters; fourth clue: show word (game over); every clue lowers amount of score you will get, showing full word gives you negative score\n'
-    help_text += '/showAnswer - show an answer and close current question, then automatically generate a new one\n'
-    help_text += '/showStats - show your statistic'
+    help_text += '/showStats - show your statistic\n'
+    if update.message.from_user.username == 'imMonkaS':
+        help_text += '/showAnswer - show an answer and close current question, then automatically generate a new one'
     await context.bot.send_message(chat_id=update.effective_chat.id, text=help_text)
 
 
